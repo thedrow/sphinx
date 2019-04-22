@@ -38,6 +38,7 @@ def register_sections_as_label(app, document):
     # type: (Sphinx, nodes.Node) -> None
     labels = app.env.domaindata['std']['labels']
     anonlabels = app.env.domaindata['std']['anonlabels']
+    dups = {}
     for node in document.traverse(nodes.section):
         if (app.config.autosectionlabel_maxdepth and
                 get_node_depth(node) >= app.config.autosectionlabel_maxdepth):
@@ -50,6 +51,12 @@ def register_sections_as_label(app, document):
             name = nodes.fully_normalize_name(docname + ':' + ref_name)
         else:
             name = nodes.fully_normalize_name(ref_name)
+        if app.config.autosectionlabel_deduplicate:
+            if name in dups:
+                dups[name] += 1
+                name += str(dups[name])
+            else:
+                dups[name] = 0
         sectname = clean_astext(title)
 
         if name in labels:
@@ -64,6 +71,7 @@ def register_sections_as_label(app, document):
 def setup(app):
     # type: (Sphinx) -> Dict[str, Any]
     app.add_config_value('autosectionlabel_prefix_document', False, 'env')
+    app.add_config_value('autosectionlabel_deduplicate', False, 'env')
     app.add_config_value('autosectionlabel_maxdepth', None, 'env')
     app.connect('doctree-read', register_sections_as_label)
 
